@@ -87,21 +87,21 @@ if command -v docker >/dev/null 2>&1; then
         pass "docker build succeeds"
 
         HELP_OUTPUT=$(docker run --rm "${IMAGE}" help 2>&1)
-        if echo "${HELP_OUTPUT}" | grep -qi "usage"; then
+        if grep -qi "usage" <<< "${HELP_OUTPUT}"; then
             pass "container 'help' command works"
         else
             fail "container 'help' command did not produce expected output"
         fi
 
         SYSTEM_OUTPUT=$(docker run --rm "${IMAGE}" system 2>&1)
-        if echo "${SYSTEM_OUTPUT}" | grep -qi "hostname"; then
+        if grep -qi "hostname" <<< "${SYSTEM_OUTPUT}"; then
             pass "container 'system' command works"
         else
             fail "container 'system' command did not produce expected output"
         fi
 
         DISK_OUTPUT=$(docker run --rm "${IMAGE}" disk 2>&1)
-        if echo "${DISK_OUTPUT}" | grep -qi "disk usage"; then
+        if grep -qi "disk usage" <<< "${DISK_OUTPUT}"; then
             pass "container 'disk' command works"
         else
             fail "container 'disk' command did not produce expected output"
@@ -145,7 +145,8 @@ if [ -d .git ]; then
         fail "fewer than 5 commits found (${COMMIT_COUNT})"
     fi
 
-    if git log --merges --oneline 2>/dev/null | grep -q .; then
+    MERGE_COUNT=$(git log --merges --oneline 2>/dev/null | wc -l | tr -d ' ')
+    if [ "${MERGE_COUNT}" -gt 0 ]; then
         pass "merge commit found in history"
     else
         fail "no merge commit found (feature branch should be merged into main)"
