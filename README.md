@@ -1,9 +1,8 @@
-# Assignment 2 — Dockerized Diagnostic CLI
+# Assignment 2: Dockerized Diagnostic CLI
 
-A Bash diagnostic CLI (`diagnostic.sh`) packaged as a lightweight Docker
-image, runnable via `docker run` or Docker Compose.
+A Bash diagnostic tool (`app/diagnostic.sh`) packaged in a Docker image. You can run it with `docker run` or Docker Compose.
 
-## Structure
+## Files
 
 ```
 assignment-2/
@@ -20,40 +19,36 @@ assignment-2/
 
 ## Requirements
 
-- Docker (or a Docker-compatible engine) with Docker Compose v2
-  (`docker compose ...`).
+Docker with Compose v2 (`docker compose`).
 
-## Installation / Setup
+## Setup
 
 ```bash
-git clone <your-repository-url>
+git clone <repo-url>
 cd assignment-2
 chmod +x grade.sh test.sh app/*.sh
 docker build -t diagnostic-tool .
 ```
 
-## Usage
-
-### CLI commands
+## Commands
 
 ```
-diagnostic system              # display Linux system information
-diagnostic network <host>      # check connectivity to a host
-diagnostic disk                # display disk usage information
-diagnostic help                # display commands and usage
+diagnostic system           system information
+diagnostic network <host>   check a host
+diagnostic disk             disk usage
+diagnostic help             list commands
 ```
 
-### Via `docker run`
+With docker run:
 
 ```bash
-docker build -t diagnostic-tool .
 docker run --rm diagnostic-tool system
 docker run --rm diagnostic-tool disk
 docker run --rm diagnostic-tool network example.com
 docker run --rm diagnostic-tool help
 ```
 
-### Via Docker Compose
+With Compose:
 
 ```bash
 docker compose run --rm diagnostic system
@@ -62,58 +57,42 @@ docker compose run --rm diagnostic network example.com
 docker compose run --rm diagnostic help
 ```
 
-### Exit codes
+Exit codes:
 
-| Code | Meaning                        |
-|------|---------------------------------|
-| 0    | success                         |
-| 1    | operational/runtime failure     |
-| 2    | invalid command or input        |
+| Code | Meaning |
+|------|---------|
+| 0 | success |
+| 1 | the check failed |
+| 2 | unknown command or missing argument |
 
-Invalid commands and missing required arguments (e.g. `diagnostic network`
-with no host) are handled explicitly and exit `2` rather than crashing the
-script.
+For example `diagnostic network` with no host prints an error and exits 2.
 
-## Dockerfile notes
+## Dockerfile
 
-- Base image: `alpine:3.20` (lightweight).
-- Installs only what's needed to run the CLI: `bash`, `coreutils`,
-  `iputils` (for `ping`), `bind-tools` (for `dig`).
-- Copies only `app/` into the image (everything else is excluded via
-  `.dockerignore`).
-- Runs as a non-root user (`diag`).
-- Defines a `HEALTHCHECK` backed by `app/health-check.sh`.
-- `ENTRYPOINT ["/app/diagnostic.sh"]` with `CMD ["help"]`, so
-  `docker run diagnostic-tool` with no arguments shows usage, and
-  `docker run diagnostic-tool <command>` runs that command directly.
+- Uses `alpine:3.20` to keep the image small
+- Installs bash, coreutils, iputils (ping) and bind-tools (dig)
+- Only copies the `app/` folder, everything else is in .dockerignore
+- Runs as a non-root user called `diag`
+- Has a HEALTHCHECK that runs `app/health-check.sh`
+- ENTRYPOINT is the script and CMD is `help`, so running the image with no arguments shows the help text
 
 ## Testing
 
 ```bash
-chmod +x grade.sh test.sh app/*.sh
-./test.sh     # runs the Docker-image test suite directly
-./grade.sh    # full grading script (structure, syntax, Docker, tests, Git)
+./test.sh
+./grade.sh
 ```
 
-`test.sh` builds the image and exercises `help`, `system`, `disk`,
-`network` (missing-host case), an invalid command, and the default
-(no-args) command — verifying both output and exit codes.
+`test.sh` builds the image and runs help, system, disk, network with no host, an invalid command and no command. It checks the output and exit code of each one.
 
-`grade.sh` additionally checks the repository structure, Bash syntax,
-executable permissions, `Dockerfile`/`.dockerignore` contents,
-`compose.yaml`, and basic Git history (5+ commits, a merged feature
-branch).
+`grade.sh` also checks the folder structure, syntax, permissions, the Dockerfile, .dockerignore, compose.yaml and the git history.
 
-## Assumptions
+## Notes
 
-- "Lightweight Linux base image" is interpreted as Alpine Linux, which
-  keeps the final image small while still providing the diagnostic tools
-  needed (`ping`, `dig`, `df`, etc.) via a minimal package set.
-- The container has no persistent state; each `docker run` is independent.
-- No secrets or credentials are used or required by the image.
+- I used Alpine as the lightweight base image.
+- The container does not keep any state between runs.
+- No secrets or credentials are needed.
 
-## Git Workflow
+## Git
 
-Built with a `feature/dockerize` branch used to develop the Dockerfile,
-Compose file and test suite in isolation, later merged into `main` — see
-`git log --graph --oneline --all` for the full history.
+The Dockerfile, Compose file and tests were built on the `feature/dockerize` branch and merged into main.
